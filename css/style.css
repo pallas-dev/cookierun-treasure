@@ -326,6 +326,10 @@ button { touch-action: manipulation; }
 }
 .opt-switch input:checked + .switch { background: var(--accent); border-color: transparent; }
 .opt-switch input:checked + .switch::after { transform: translateX(16px); background: #fff; }
+/* 지금은 쓸 수 없는 옵션 (진화 전·후 옵션은 중복 없이 뽑기를 켰을 때만) */
+.opt-switch:has(input:disabled) { cursor: not-allowed; }
+.opt-switch input:disabled + .switch { opacity: 0.4; }
+.opt-switch input:disabled ~ .opt-text { color: var(--muted); }
 
 /* ---------- main ---------- */
 .main { grid-area: main; min-width: 0; display: flex; flex-direction: column; gap: 16px; }

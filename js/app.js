@@ -158,19 +158,20 @@
   const fresh = (pool) => (state.opts.noRepeat ? pool.filter((t) => !state.seen.has(t.id)) : pool);
 
   // i번 칸에 새로 넣을 수 있는 후보
-  //  - 다른 칸과 같은 보물 X, 지금 이 칸에 있는 보물 X
-  //  - (중복 없이 뽑기) 이미 나온 보물 X
-  //  - (진화 전·후 옵션) 다른 칸과 같은 계열 X
+  //  - 지금 이 칸에 있는 보물 X (리롤하면 꼭 다른 보물로 바뀌게)
+  //  - 칸마다 따로 뽑아서, 다른 칸과 같은 보물도 나올 수 있어요 (세 칸 다 같은 보물도)
+  //  - 중복 없이 뽑기를 켜면: 이미 나온 보물 X · 다른 칸과 같은 보물 X
+  //                          · (진화 전·후 옵션) 다른 칸과 같은 계열 X
   function candidates(i, slots, pool) {
+    const list = fresh(pool).filter((t) => t.id !== slots[i]);
+    if (!state.opts.noRepeat) return list;
     const others = slots
       .filter((id, j) => j !== i && id !== null)
       .map((id) => BY_ID.get(id))
       .filter(Boolean);
     const ids = new Set(others.map((t) => t.id));
     const families = new Set(others.map(familyKey));
-    return fresh(pool).filter(
-      (t) => t.id !== slots[i] && !ids.has(t.id) && !(state.opts.family && families.has(familyKey(t))),
-    );
+    return list.filter((t) => !ids.has(t.id) && !(state.opts.family && families.has(familyKey(t))));
   }
 
   const limitLeft = () =>
@@ -524,7 +525,8 @@
     let msg = '';
     if (!pool.length) msg = '조건에 맞는 보물이 없어요. 필터를 켜 주세요.';
     else if (!n) msg = MSG_ALL_SEEN;
-    else if (n < SLOT_COUNT) {
+    else if (state.opts.noRepeat && n < SLOT_COUNT) {
+      // 칸이 비는 건 중복 없이 뽑을 때뿐이에요 (꺼 두면 같은 보물로 채워요)
       msg = used ? `남은 보물이 ${fmt(n)}개뿐이에요.` : `후보가 ${SLOT_COUNT}개보다 적어서 일부 칸은 비어 있게 돼요.`;
     }
     const warn = $('poolWarn');
@@ -659,17 +661,30 @@
     show();
   }
 
+  // 진화 전·후 옵션은 중복 없이 뽑기를 켰을 때만 써요 (꺼 두면 같은 보물끼리도 여러 칸에 나오니까)
+  function syncFamilySwitch() {
+    const on = state.opts.noRepeat;
+    $('optFamily').disabled = !on;
+    $('optFamilyNote').textContent = on ? '예: 성스러운 깃털 + 무지개빛 깃털' : '중복 없이 뽑기를 켜면 적용돼요';
+  }
+
   function bindOptions() {
     bindLimit();
     bindSwitch('optNoRepeat', 'noRepeat', (on) => {
       // 켜는 순간 화면에 있는 보물부터 "나온 보물"로 셈
       state.seen = new Set(on ? state.slots.filter((v) => v !== null) : []);
+      syncFamilySwitch();
       renderPool();
       syncControls();
-      toast(on ? '이제 한 번 나온 보물은 초기화 전까지 다시 안 나와요.' : '이미 나온 보물도 다시 나올 수 있어요.');
+      toast(
+        on
+          ? '이제 칸끼리도 안 겹치고, 나온 보물은 초기화 전까지 다시 안 나와요.'
+          : '이제 같은 보물이 여러 칸에 나올 수 있고, 나온 보물도 다시 나와요.',
+      );
     });
     bindSwitch('optFamily', 'family');
     bindSwitch('optAnim', 'anim');
+    syncFamilySwitch();
   }
 
   function bindUI() {
