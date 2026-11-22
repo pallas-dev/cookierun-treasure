@@ -2,6 +2,7 @@
 #
 #   · main 에 올리면(push) 바로 사이트에 반영돼요.
 #   · 매일 아침(한국 시간 6시 반쯤) 쿠키런HUB 도감을 확인해서, 바뀐 게 있으면 커밋하고 다시 배포해요.
+#     바뀐 게 없어도 사이트가 최신 커밋이 아니면(예전 배포가 실패했을 때) 다시 배포해요.
 #   · 지금 바로 갱신하려면: 저장소 → Actions → "배포 · 보물 데이터 갱신" → Run workflow
 #   · tools/update_data.py 의 설정을 바꿔서 올려도 데이터를 다시 만들어요.
 #
@@ -28,8 +29,10 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: write
+      pages: read # 사이트 주소 확인용
     outputs:
       changed: ${{ steps.update.outputs.changed }}
+      stale: ${{ steps.live.outputs.stale }}
     steps:
       - uses: actions/checkout@v7
 
@@ -50,20 +53,35 @@ jobs:
           git pull --rebase
           git push
 
-  deploy:
-    name: 사이트 배포
+      # 예전 배포가 실패해서 사이트가 옛 버전에 머물러 있으면, 데이터가 그대로여도 다시 배포해요.
+      # 사이트 index.html 의 app.js?v=커밋번호 를 지금 커밋과 비교해요. 확인이 안 되면 그냥 다시 배포해요.
+      - name: 사이트가 최신 커밋인지 확인
+        id: live
+        if: steps.update.outputs.changed != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          url=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .html_url) || url=""
+          live=""
+          if [ -n "$url" ]; then
+            live=$(curl -fsSL "${url}?check=$(date +%s)" | grep -o 'app\.js?v=[0-9a-f]*' | head -n 1 | cut -d= -f2 || true)
+          fi
+          if [ -n "$live" ] && [[ "$(git rev-parse HEAD)" == "$live"* ]]; then
+            echo "사이트가 최신 커밋이에요 ($live)"
+          else
+            echo "사이트가 최신 커밋이 아니에요 (사이트: ${live:-확인 못 함}) → 다시 배포해요"
+            echo "stale=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    name: 사이트 파일 준비
     needs: update
-    # 직접 올렸을 때 · 버튼으로 실행했을 때 · 매일 확인에서 바뀐 게 있을 때
-    if: ${{ !cancelled() && (github.event_name != 'schedule' || needs.update.outputs.changed == 'true') }}
+    # 직접 올렸을 때 · 버튼으로 실행했을 때 · 매일 확인에서 바뀐 게 있거나 사이트가 옛 버전일 때
+    if: ${{ !cancelled() && (github.event_name != 'schedule' || needs.update.outputs.changed == 'true' || needs.update.outputs.stale == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: read
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -76,11 +94,27 @@ jobs:
           # 브라우저가 예전 파일을 쓰지 않도록 ?v=dev 를 이번 커밋 번호로 바꿔요
           sed -i "s/?v=dev/?v=$(git rev-parse --short HEAD)/g" _site/index.html
 
-      - uses: actions/configure-pages@v6
-
       - uses: actions/upload-pages-artifact@v5
         with:
           path: _site
+
+  # 파일 올리기(build)와 배포(deploy)를 다른 작업으로 나눠요.
+  # 같은 작업에서 올리자마자 배포하면, 방금 올린 파일이 GitHub 목록에 아직 안 떠서 배포가 실패할 때가 있어요.
+  deploy:
+    name: 사이트 배포
+    needs: build
+    if: ${{ !cancelled() && needs.build.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v6
 
       - name: 배포
         id: deployment
