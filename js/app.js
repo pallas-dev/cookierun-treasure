@@ -22,7 +22,7 @@
   const isLimit = (v) => v === null || (Number.isInteger(v) && v >= 0);
   const isCount = (v) => Number.isInteger(v) && v >= 1;
 
-  // 리롤: limit = null(무제한) · 0(리롤 불가) · N(한 판에 N회), count = '횟수 지정'에 넣어 둔 N
+  // 리롤: limit = null(무제한) · 0(리롤 불가) · N(초기화 전까지 N회), count = '횟수 지정'에 넣어 둔 N
   function cleanOpts(o, base) {
     const src = o && typeof o === 'object' ? o : {};
     const bool = (k) => (typeof src[k] === 'boolean' ? src[k] : base[k]);
@@ -99,7 +99,7 @@
       off: Object.fromEntries(GROUP_KEYS.map((g) => [g, []])), // 꺼 둔 필터 값 (새로 생긴 값은 기본으로 켜짐)
       opts: { ...DEFAULT_OPTS },
       slots: Array(SLOT_COUNT).fill(null),
-      rerolls: 0, // 이번 판 리롤 횟수
+      rerolls: 0, // 칸별 리롤 횟수 — 새로 뽑아도 이어서 세고, 초기화할 때만 0으로
       seen: new Set(), // 중복 없이 뽑기: 이미 나온 보물 id
     };
     let saved = null;
@@ -176,6 +176,10 @@
   const limitLeft = () =>
     state.opts.limit === null ? Infinity : Math.max(0, state.opts.limit - state.rerolls);
 
+  // 초기화할 게 남아 있는지 (뽑은 보물 · 리롤 횟수 · 중복 없이 뽑기 기록)
+  const hasProgress = () =>
+    state.slots.some((v) => v !== null) || state.rerolls > 0 || (state.opts.noRepeat && state.seen.size > 0);
+
   function remember(ids) {
     if (state.opts.noRepeat) ids.forEach((id) => id !== null && state.seen.add(id));
   }
@@ -203,8 +207,7 @@
       toast(MSG_ALL_SEEN);
       return;
     }
-    state.slots = next;
-    state.rerolls = 0;
+    state.slots = next; // 리롤 횟수는 그대로 (새로 뽑기는 리롤로 안 치고, 0으로 되돌리지도 않아요)
     remember(next);
     save();
     renderPool();
@@ -219,7 +222,7 @@
       toast(
         state.opts.limit === 0
           ? '리롤 불가로 정해 뒀어요. 옵션에서 바꿀 수 있어요.'
-          : '리롤 횟수를 다 썼어요. 옵션에서 횟수를 늘릴 수 있어요.',
+          : '리롤 횟수를 다 썼어요. 초기화하거나 옵션에서 횟수를 늘려 주세요.',
       );
       return;
     }
@@ -239,48 +242,20 @@
     play([i]);
   }
 
+  // 뽑은 보물 · 리롤 횟수 · 중복 없이 뽑기 기록을 모두 처음으로 (리롤 횟수는 여기서만 0이 돼요)
   function clearSlots() {
-    if (busy.size) return;
+    if (busy.size || !hasProgress()) return;
     const hadSeen = state.opts.noRepeat && state.seen.size > 0;
-    if (state.slots.every((v) => v === null) && !hadSeen) return;
     state.slots = Array(SLOT_COUNT).fill(null);
     state.rerolls = 0;
     state.seen.clear();
     save();
     renderAll();
-    toast(hadSeen ? '초기화했어요. 이미 나온 보물도 다시 나올 수 있어요.' : '칸을 비웠어요.');
-  }
-
-  async function copyResult() {
-    if (state.slots.every((v) => v === null)) {
-      toast('아직 뽑은 보물이 없어요.');
-      return;
-    }
-    const lines = state.slots.map((id, i) => {
-      const t = BY_ID.get(id);
-      if (!t) return `${i + 1}. -`;
-      return `${i + 1}. ${t.name} (${t.grade}등급 · ${catLabel(t.cat)}${isEvolved(t) ? ' · 진화' : ''})`;
-    });
-    const text = [`🎲 쿠키런 보물 랜덤 뽑기 · 리롤 ${state.rerolls}회`, ...lines].join('\n');
-    let ok = false;
-    try {
-      await navigator.clipboard.writeText(text);
-      ok = true;
-    } catch {
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      ta.setAttribute('readonly', '');
-      ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
-      document.body.append(ta);
-      ta.select();
-      try {
-        ok = document.execCommand('copy');
-      } catch {
-        ok = false;
-      }
-      ta.remove();
-    }
-    toast(ok ? '결과를 복사했어요.' : '복사하지 못했어요. 브라우저 권한을 확인해 주세요.');
+    toast(
+      hadSeen
+        ? '초기화했어요. 리롤 횟수는 0회로, 이미 나온 보물도 다시 나올 수 있어요.'
+        : '초기화했어요. 리롤 횟수도 0회로 돌아갔어요.',
+    );
   }
 
   /* ------------------------------------------------------------------ *
@@ -592,8 +567,7 @@
         : anyFilled
           ? `새로 ${SLOT_COUNT}개 뽑기`
           : `보물 ${SLOT_COUNT}개 뽑기`;
-    $('copyResult').disabled = !anyFilled;
-    $('clearSlots').disabled = anyBusy || (!anyFilled && !(state.opts.noRepeat && state.seen.size));
+    $('clearSlots').disabled = anyBusy || !hasProgress();
 
     $('rerollUsed').textContent = String(state.rerolls);
     const leftEl = $('rerollLeft');
@@ -632,6 +606,7 @@
   function bindLimit() {
     const radios = [...document.querySelectorAll('input[name="limitMode"]')];
     const row = $('limitCountRow');
+    const note = $('limitNote');
     const input = $('limitCount');
     const minus = row.querySelector('[data-step="-1"]');
     const plus = row.querySelector('[data-step="1"]');
@@ -647,6 +622,7 @@
         r.checked = r.value === mode();
       });
       row.hidden = mode() !== 'count';
+      note.hidden = mode() === 'none'; // 리롤 불가일 때는 셀 게 없으니 안내도 숨겨요
       input.value = String(state.opts.count);
       syncSteps();
     };
@@ -699,7 +675,6 @@
   function bindUI() {
     $('rollAll').addEventListener('click', rollAll);
     $('clearSlots').addEventListener('click', clearSlots);
-    $('copyResult').addEventListener('click', copyResult);
 
     const toggle = $('filterToggle');
     toggle.addEventListener('click', () => {

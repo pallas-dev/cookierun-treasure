@@ -78,10 +78,11 @@
           <div class="stepper" id="limitCountRow" hidden>
             <span>최대</span>
             <button type="button" data-step="-1" aria-label="리롤 횟수 1 줄이기">−</button>
-            <input type="number" id="limitCount" min="1" max="99" step="1" inputmode="numeric" aria-label="한 판에 리롤할 수 있는 횟수">
+            <input type="number" id="limitCount" min="1" max="99" step="1" inputmode="numeric" aria-label="초기화 전까지 리롤할 수 있는 횟수">
             <button type="button" data-step="1" aria-label="리롤 횟수 1 늘리기">+</button>
             <span>회</span>
           </div>
+          <p class="limit-note" id="limitNote">새로 뽑아도 이어서 세요 · 초기화하면 0회부터</p>
         </fieldset>
         <label class="opt-switch">
           <input type="checkbox" id="optNoRepeat">
@@ -117,8 +118,7 @@
           </div>
         </div>
         <div class="action-sub">
-          <button type="button" class="btn" id="copyResult">결과 복사</button>
-          <button type="button" class="btn danger-ghost" id="clearSlots" title="뽑은 보물을 비우고 처음부터">초기화</button>
+          <button type="button" class="btn danger-ghost" id="clearSlots" title="뽑은 보물과 리롤 횟수를 비우고 처음부터">초기화</button>
         </div>
       </div>
       <p class="hint">단축키 <kbd>R</kbd> 새로 뽑기 · <span id="hintKeys"><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></span> 해당 칸 리롤</p>

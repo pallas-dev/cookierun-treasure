@@ -264,6 +264,7 @@ button { touch-action: manipulation; }
 .seg input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
 .stepper { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 13.5px; color: var(--text-2); }
 .stepper[hidden] { display: none; }
+.limit-note { margin: 7px 0 0; font-size: 11.5px; line-height: 1.35; color: var(--muted); }
 .stepper button,
 .stepper input {
   height: 34px;
@@ -656,7 +657,7 @@ kbd {
   .hide-sm { display: none; }
   .meter-label { margin-right: 2px; }
   .meter-left { margin-left: 6px; }
-  .action-sub { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: -6px; }
+  .action-sub { display: grid; margin-top: -6px; }
   .action-sub .btn { height: 44px; }
 }
 
