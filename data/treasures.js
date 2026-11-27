@@ -1,6 +1,6 @@
 /* 자동 생성 파일이에요. 직접 고치지 말고 `python3 tools/update_data.py` 로 갱신하세요. */
 window.TREASURE_DATA = {
-  "updated": "2026-11-22",
+  "updated": "2026-11-27",
   "source": "https://www.cookierunhub.com/encyclopedia?tab=treasures",
   "imageBase": "https://www.cookierunhub.com/",
   "items": [
@@ -651,6 +651,12 @@ window.TREASURE_DATA = {
     {"id":933,"name":"향기 칙칙 섬유 탈취제","grade":"S","cat":"gacha","evo":null,"img":"game_item_39f6513447.webp","src":"uploads/treasures/game_item_39f6513447.webp","ability":"• 모든 젤리 200~350점 추가\n• 구출 2회 + 구출시 500만점 획득 (2회) * 해당 보물에 한함"},
     {"id":934,"name":"향기 솔솔 플로럴 디퓨저","grade":"S","cat":"gacha","evo":933,"img":"game_item_ff61552265.webp","src":"uploads/treasures/game_item_ff61552265.webp","ability":"일반성공시 :\n• 모든 젤리 400~550점 추가\n• 구출 2회 + 구출시 700만점 획득 (2회) * 해당 보물에 한함\n대성공시 :\n• 모든 젤리 n~n점 추가\n• 구출 2회 + 구출시 n만점 획득 (2회) * 해당 보물에 한함"},
     {"id":935,"name":"우베아이스맛 쿠키의 레트로 카메라","grade":"S","cat":"cookie","evo":null,"img":"game_item_d4f377f590.webp","src":"uploads/treasures/game_item_d4f377f590.webp","ability":"• 모든 젤리 220~400점 추가\n• 체력감소 2~4% 느림"},
-    {"id":936,"name":"DJ우베라또의 젤라또 보울 베드","grade":"S","cat":"pet","evo":null,"img":"dj.webp","src":"uploads/treasures/dj.webp","ability":"• 기본속도 3~4% 증가\n• 구출/부활(체력 15~25) 총 3회"}
+    {"id":936,"name":"DJ우베라또의 젤라또 보울 베드","grade":"S","cat":"pet","evo":null,"img":"dj.webp","src":"uploads/treasures/dj.webp","ability":"• 기본속도 3~4% 증가\n• 구출/부활(체력 15~25) 총 3회"},
+    {"id":937,"name":"기능성 스포티 바람막이","grade":"S","cat":"gacha","evo":null,"img":"game_item_89ea219e94.webp","src":"uploads/treasures/game_item_89ea219e94.webp","ability":"-​강화 수치에 따라 거대화시 체력감소 7~12% 느림\n-강화 수치에 따라 거대화시 모든 젤리 150~250점 추가"},
+    {"id":938,"name":"아직 쓰지 못한 가을 편지지","grade":"S","cat":"gacha","evo":null,"img":"game_item_feff87205f.webp","src":"uploads/treasures/game_item_feff87205f.webp","ability":"체력이 40~60 증가\n체력회복량 6~9% 증가"},
+    {"id":939,"name":"모범생의 삼색 볼펜","grade":"S","cat":"gacha","evo":null,"img":"game_item_ff9906b323.webp","src":"uploads/treasures/game_item_ff9906b323.webp","ability":"생명물약 획득시 광속질주 0.3~0.5초\n광속질주시 30~80% 확률로 은화를 금화로 변경 (변경 최대 개수 제한 있음)"},
+    {"id":940,"name":"멋드러진 트렌치 코트","grade":"S","cat":"gacha","evo":937,"img":"game_item_dc01bb30f2.webp","src":"uploads/treasures/game_item_dc01bb30f2.webp","ability":"일반성공시 :\n• 체력감소 15~20% 느림\n• 거대화시 모든 젤리 300~500점 추가\n대성공시 :\n• 체력감소 17~22% 느림\n• 거대화시 모든 젤리 350~550점 추가"},
+    {"id":941,"name":"정성스레 포장한 선물 소포","grade":"S","cat":"gacha","evo":938,"img":"game_item_87c8fcd480.webp","src":"uploads/treasures/game_item_87c8fcd480.webp","ability":"일반성공시 :\n• 체력이 60~80 증가\n• 체력회복량 9~11% 증가\n대성공시 :\n• [대성 보물능력 1]\n• [대성 보물능력 2]"},
+    {"id":942,"name":"장인의 고급 만년필","grade":"S","cat":"gacha","evo":939,"img":"game_item_ce365f10a5.webp","src":"uploads/treasures/game_item_ce365f10a5.webp","ability":"일반성공시 :\n• 생명물약 획득시 광속질주 0.5~0.8초\n• 광속질주시 40~90% 확률로 은화를 금화로 변경 (변경 최대 개수 제한 있음)\n대성공시 :\n• [대성 보물능력 1]\n• [대성 보물능력 2]"}
   ]
 };
